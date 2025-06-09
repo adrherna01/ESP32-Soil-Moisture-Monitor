@@ -1,0 +1,29 @@
+services:
+  api:
+    container_name: api
+    build:
+      context: ./src/Backend/api
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./src/Backend/api:/app
+    environment:
+      - PORT=8080
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15
+    container_name: db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d/
+
+volumes:
+  postgres_data:
