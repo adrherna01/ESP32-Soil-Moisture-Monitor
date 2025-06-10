@@ -15,38 +15,42 @@ void setup() {
     Serial.print(".");
   }
   Serial.println("\nWiFi connected");
+
+  pinMode(ledPin, OUTPUT);
 }
 
 void loop() {
   int moistureValue = analogRead(sensorPin);
+  digitalWrite(ledPin, HIGH);
+  delay(1000);
+  digitalWrite(ledPin, LOW);
   Serial.print("Moisture: ");
   Serial.println(moistureValue);
 
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
-    http.begin("https://api.pushover.net/1/messages.json");
-    http.addHeader("Content-Type", "application/x-www-form-urlencoded");
 
-    String payload = "token=" + String(TOKEN) +
-                     "&user=" + String(USER_KEY) +
-                     "&message=Moisture+level+is+" + String(moistureValue);
+    String url = String("http://") + HOST_IP + ":" + String(PORT) + "/measurements";
+    http.begin(url);
+    http.addHeader("Content-Type", "application/json");
 
-    Serial.println(payload);
+    String jsonData = "{\"humidity\":" + String(moistureValue) + "}";
 
-    int httpResponseCode = http.POST(payload);
+    Serial.println(jsonData);
+
+    int httpResponseCode = http.POST(jsonData);
 
     if (httpResponseCode > 0) {
-      Serial.println("Notification sent");
-    } else {
-      Serial.print("Error sending notification: ");
-      Serial.println(httpResponseCode);
-    }
-
+        String response = http.getString();
+        Serial.println("Server response: " + response);
+      } else {
+          Serial.print("Error sending notification: ");
+          Serial.println(httpResponseCode);
+        }
     http.end();
   } else {
     Serial.println("WiFi not connected");
   }
 
-  // sending every 60 seconds
-  delay(60000); 
+  delay(10000); // send every 10 seconds
 }
