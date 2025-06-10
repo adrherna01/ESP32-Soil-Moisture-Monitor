@@ -1,0 +1,4 @@
+CREATE TABLE measurements (
+    id SERIAL PRIMARY KEY,
+    humidity DOUBLE PRECISION NOT NULL
+);
