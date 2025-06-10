@@ -1,6 +1,6 @@
 # ESP32 Soil Moisture Monitor with Pushover Notifications
 
-This project uses an ESP32 microcontroller connected to a YL-69 soil moisture sensor to monitor the moisture level of your plant's soil. It connects to WiFi and sends notifications via [Pushover](https://pushover.net/) when it reads the current moisture level, helping you know when your plant needs watering.
+This project utilizes an ESP32 microcontroller paired with a YL-69 soil moisture sensor to continuously monitor the moisture level of your plant’s soil. The device connects to WiFi and sends the moisture readings to a backend server, which stores the data in a database. With this setup, you can easily track your plant’s soil conditions and receive timely notifications to know exactly when your plant needs watering.
 
 ---
 
