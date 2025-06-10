@@ -12,6 +12,12 @@ down:
 stop:
 	$(COMPOSE) stop
 
+logs:
+	$(COMPOSE) logs -f
+
+prune:
+	docker system prune -a
+
 api:
 	docker exec -it api bash
 
