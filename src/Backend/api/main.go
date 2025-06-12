@@ -16,6 +16,11 @@ type Measurement struct {
 	Humidity float64 `json:"humidity"`
 }
 
+type Device struct {
+	Ip string `json:"ip"`
+	Port string `json:"port"`
+}
+
 var db *sql.DB
 
 func main() {
@@ -45,6 +50,7 @@ func main() {
     }
 
 	http.HandleFunc("/measurements", measurementHandler)
+	http.HandleFunc("/register", registerHandler)
 	
 	log.Println("Server started on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
@@ -71,7 +77,35 @@ func measurementHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 	
-	log.Printf("Inserted measurement: %+v\n", m)
+	fmt.Printf("Inserted measurement: %+v\n", m)
     w.WriteHeader(http.StatusOK)
     w.Write([]byte("Measurement logged"))
+}
+
+func registerHandler(w http.ResponseWriter, r *http.Request) { 
+	if r.Method != http.MethodPost {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+
+	var d Device
+    err := json.NewDecoder(r.Body).Decode(&d)
+    if err != nil {
+        http.Error(w, "Invalid JSON", http.StatusBadRequest)
+        return
+    }
+
+	fmt.Printf("From backendy Ip address: %s Port: %s\n", d.Ip, d.Port)
+
+	query := `INSERT INTO devices (ip, port) VALUES ($1, $2)`
+	_, err = db.Exec(query, d.Ip, d.Port)
+	if err != nil {
+		log.Println("DB insert error:", err)
+		http.Error(w, "Failed to insert", http.StatusInternalServerError)
+		return
+	}
+	
+	// log.Printf("Inserted measurement: %+v\n", d)
+    w.WriteHeader(http.StatusOK)
+    w.Write([]byte("Device logged"))
 }

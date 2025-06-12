@@ -1,56 +1,83 @@
 #include <WiFi.h>
+#include <WebServer.h>
 #include <HTTPClient.h>
 #include "credentials.h"
 
 const int sensorPin = 34;
 const int ledPin = 2;
 
+WebServer server(80);
+
+bool isBackConnected() {
+  String ip = WiFi.localIP().toString();
+  HTTPClient http;
+
+    String url = String("http://") + HOST_IP + ":" + String(HOST_PORT) + "/register";
+    Serial.println(url);
+
+    http.begin(url);
+    http.addHeader("Content-Type", "application/json");
+
+    String jsonData = "{\"ip\":\"" + ip + "\",\"port\":\"" + String(PORT) + "\"}";
+
+    int httpResponseCode = http.POST(jsonData);
+
+    if (httpResponseCode != -1) {
+      Serial.print("Http response code: ");
+      Serial.println(String(httpResponseCode));
+    }
+
+    if (httpResponseCode == 200) {
+      http.end();
+      return true;
+    }
+    http.end();
+    return false;
+}
+
+void handleMeasure() {
+  int moistureValue = analogRead(sensorPin);
+
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    String url = String("http://") + HOST_IP + ":" + String(HOST_PORT) + "/measurements";
+    
+    // Serial.println(url);
+
+    http.begin(url);
+    http.addHeader("Content-Type", "application/json");
+    String jsonData = "{\"humidity\":" + String(moistureValue) + "}";
+    int httpResponseCode = http.POST(jsonData);
+    http.end();
+  }
+
+  // Respond to the requester
+  String json = "{\"humidity\": " + String(moistureValue) + "}";
+  server.send(200, "application/json", json);
+}
+
 void setup() {
   Serial.begin(115200);
   WiFi.begin(SSID, PASS);
 
-  Serial.print("Connecting to WiFi");
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    Serial.print(".");
   }
-  Serial.println("\nWiFi connected");
 
-  pinMode(ledPin, OUTPUT);
+  Serial.print("WiFi connected \n");
+  // Serial.print("IP address: ");
+  // Serial.println(WiFi.localIP());
+
+  while (!isBackConnected())
+    delay(5000);
+
+  server.on("/measure", HTTP_GET, handleMeasure);
+  server.begin();
 }
 
 void loop() {
-  int moistureValue = analogRead(sensorPin);
-  digitalWrite(ledPin, HIGH);
-  delay(1000);
-  digitalWrite(ledPin, LOW);
-  Serial.print("Moisture: ");
-  Serial.println(moistureValue);
-
-  if (WiFi.status() == WL_CONNECTED) {
-    HTTPClient http;
-
-    String url = String("http://") + HOST_IP + ":" + String(PORT) + "/measurements";
-    http.begin(url);
-    http.addHeader("Content-Type", "application/json");
-
-    String jsonData = "{\"humidity\":" + String(moistureValue) + "}";
-
-    Serial.println(jsonData);
-
-    int httpResponseCode = http.POST(jsonData);
-
-    if (httpResponseCode > 0) {
-        String response = http.getString();
-        Serial.println("Server response: " + response);
-      } else {
-          Serial.print("Error sending notification: ");
-          Serial.println(httpResponseCode);
-        }
-    http.end();
-  } else {
-    Serial.println("WiFi not connected");
-  }
-
-  delay(10000); // send every 10 seconds
+  server.handleClient();
 }
+
+// Logear ip al backend asi el backend luego puede hacer un call all api
+// de el esp32.
