@@ -2,3 +2,9 @@ CREATE TABLE measurements (
     id SERIAL PRIMARY KEY,
     humidity DOUBLE PRECISION NOT NULL
 );
+
+CREATE TABLE devices (
+    id SERIAL PRIMARY KEY,
+    ip TEXT NOT NULL,
+    port TEXT NOT NULL
+);
