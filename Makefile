@@ -15,13 +15,22 @@ stop:
 logs:
 	$(COMPOSE) logs -f
 
+re:
+	$(COMPOSE) up -d --build backend
+
 prune:
 	docker system prune -a
 
-api:
-	docker exec -it api bash
+backend:
+	docker exec -it backend bash
+
+frontend:
+	docker exec -it frontend bash
 
 db:
 	docker exec -it db bash
+
+front:
+	cd src/frontend && docker build -t frontend . && docker run -p 80:80 frontend
 
 .PHONY: db api

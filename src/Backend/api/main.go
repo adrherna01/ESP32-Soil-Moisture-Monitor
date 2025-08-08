@@ -49,6 +49,8 @@ func main() {
         time.Sleep(2 * time.Second)
     }
 
+    go pollSensor()
+
 	http.HandleFunc("/measurements", measurementHandler)
 	http.HandleFunc("/register", registerHandler)
 	
@@ -69,15 +71,14 @@ func measurementHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-	query := `INSERT INTO measurements (humidity) VALUES ($1)`
+	query := `INSERT INTO measurements (humidity, timestamp) VALUES ($1, NOW())`
     _, err = db.Exec(query, m.Humidity)
     if err != nil {
         log.Println("DB insert error:", err)
         http.Error(w, "Failed to insert", http.StatusInternalServerError)
         return
     }
-	
-	fmt.Printf("Inserted measurement: %+v\n", m)
+
     w.WriteHeader(http.StatusOK)
     w.Write([]byte("Measurement logged"))
 }
@@ -95,7 +96,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-	fmt.Printf("From backendy Ip address: %s Port: %s\n", d.Ip, d.Port)
+	fmt.Printf("From backend Ip address: %s Port: %s\n", d.Ip, d.Port)
 
 	query := `INSERT INTO devices (ip, port) VALUES ($1, $2)`
 	_, err = db.Exec(query, d.Ip, d.Port)
@@ -105,7 +106,48 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	// log.Printf("Inserted measurement: %+v\n", d)
     w.WriteHeader(http.StatusOK)
-    w.Write([]byte("Device logged"))
+    fmt.Println("Device logged")
+}
+
+func pollSensor() {
+	interval := 10 * time.Second // poll every 10s
+
+	for {
+		var ip, port string
+		err := db.QueryRow(`SELECT ip, port FROM devices ORDER BY id ASC LIMIT 1`).Scan(&ip, &port)
+		if err != nil {
+			log.Println("No device found or DB error:", err)
+			time.Sleep(interval)
+			continue
+		}
+
+		url := fmt.Sprintf("http://%s:%s/measure", ip, port)
+
+		resp, err := http.Get(url)
+		if err != nil {
+			log.Println("Failed to contact ESP32:", err)
+			time.Sleep(interval)
+			continue
+		}
+
+		var m Measurement
+		err = json.NewDecoder(resp.Body).Decode(&m)
+		resp.Body.Close()
+		if err != nil {
+			log.Println("Failed to decode response:", err)
+			time.Sleep(interval)
+			continue
+		}
+
+		log.Printf("Polled ESP32: %+v", m)
+
+		query := `INSERT INTO measurements (humidity) VALUES ($1)`
+		_, err = db.Exec(query, m.Humidity)
+		if err != nil {
+			log.Println("DB insert error:", err)
+		}
+
+		time.Sleep(interval)
+	}
 }

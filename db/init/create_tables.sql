@@ -1,8 +1,8 @@
 CREATE TABLE measurements (
     id SERIAL PRIMARY KEY,
-    humidity DOUBLE PRECISION NOT NULL
+    humidity DOUBLE PRECISION NOT NULL,
+    timestamp TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
 CREATE TABLE devices (
     id SERIAL PRIMARY KEY,
     ip TEXT NOT NULL,
