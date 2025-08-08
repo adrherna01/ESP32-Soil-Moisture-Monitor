@@ -30,3 +30,39 @@ This project utilizes an ESP32 microcontroller paired with a YL-69 soil moisture
 
 ---
 
+🏗️ RUNNING & BUILDING
+
+Command	Description:
+
+    go run file.go	Runs a Go file directly (interpreted-like).
+
+    go build	Compiles the current Go package into a binary.
+    
+    go build file.go	Builds a specific file.
+    
+    go install	Compiles and installs the package to $GOPATH/bin.
+        
+    go clean	Removes build files.
+
+📦 GO MODULES (DEPENDENCY MANAGEMENT)
+
+These commands assume you're using Go Modules (go mod) — which is standard now.
+    Command	Description:
+
+    go mod init module/name	Initializes a new Go module (like a project).
+   
+    go mod tidy	Adds missing and removes unused dependencies.
+   
+    go get pkg/path	Adds a new dependency or updates it.
+   
+    go list -m all	Lists all modules and their versions.
+   
+    go mod download	Downloads modules to local cache.
+
+
+
+## To Do: 
+- Create frontend
+- Define measuring Logic
+- Set a more readable value for the measurement
+

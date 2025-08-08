@@ -1,6 +1,6 @@
 services:
-  api:
-    container_name: api
+  backend:
+    container_name: backend
     build:
       context: ./src/Backend/api
     ports:
@@ -29,6 +29,19 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d/
     restart: always
+  
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - db
+    restart: always
 
 volumes:
   postgres_data:
+  grafana_data:
